@@ -16,10 +16,10 @@ import {UUID} from "crypto";
 import {createGqlResponseSchema, gqlResponseSchema} from './schemas.js';
 import {MemberType} from "./types/MemberType.js";
 import {MemberTypeEnumType} from "./types/MemberTypeEnumId.js";
-import {CreatePostInputType, PostType} from "./types/Post.js";
-import {CreateProfileInputType, ProfileType} from "./types/Profile.js";
+import {ChangePostInputType, CreatePostInputType, PostType} from "./types/Post.js";
+import {ChangeProfileInputType, CreateProfileInputType, ProfileType} from "./types/Profile.js";
 import {UUIDType} from "./types/uuid.js";
-import {CreateUserInputType, UserType} from "./types/User.js";
+import {ChangeUserInputType, CreateUserInputType, UserType} from "./types/User.js";
 
 export enum MemberTypeId {
     BASIC = 'basic',
@@ -151,10 +151,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
 
                         deleteUser: {
                             type: GraphQLBoolean,
-                            args: {
-                                id: {type: new GraphQLNonNull(UUIDType)},
-                            },
-
+                            args: {id: {type: new GraphQLNonNull(UUIDType)}},
                             resolve: async (_, {id}: { id: UUID }) => {
                                 return !!(await prisma.user.delete({where: {id}}));
                             },
@@ -162,10 +159,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
 
                         deletePost: {
                             type: GraphQLBoolean,
-                            args: {
-                                id: {type: new GraphQLNonNull(UUIDType)},
-                            },
-
+                            args: {id: {type: new GraphQLNonNull(UUIDType)}},
                             resolve: async (_, {id}: { id: UUID }) => {
                                 return !!(await prisma.post.delete({where: {id}}));
                             },
@@ -173,12 +167,51 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
 
                         deleteProfile: {
                             type: GraphQLBoolean,
-                            args: {
-                                id: {type: new GraphQLNonNull(UUIDType)},
-                            },
-
+                            args: {id: {type: new GraphQLNonNull(UUIDType)}},
                             resolve: async (_, {id}: { id: UUID }) => {
                                 return !!(await prisma.profile.delete({where: {id}}));
+                            },
+                        },
+
+                        changeUser: {
+                            type: UserType as GraphQLObjectType,
+                            args: {
+                                id: {type: new GraphQLNonNull(UUIDType)},
+                                dto: {type: new GraphQLNonNull(ChangeUserInputType)},
+                            },
+                            resolve: (_, {id, dto}: { id: UUID; dto: { name: string } }) => {
+                                return prisma.user.update({
+                                    where: {id},
+                                    data: dto,
+                                });
+                            },
+                        },
+
+                        changePost: {
+                            type: PostType,
+                            args: {
+                                id: {type: new GraphQLNonNull(UUIDType)},
+                                dto: {type: new GraphQLNonNull(ChangePostInputType)},
+                            },
+                            resolve: (_, {id, dto}: { id: UUID; dto: { title: string } }) => {
+                                return prisma.post.update({
+                                    where: {id},
+                                    data: dto,
+                                });
+                            },
+                        },
+
+                        changeProfile: {
+                            type: ProfileType,
+                            args: {
+                                id: {type: new GraphQLNonNull(UUIDType)},
+                                dto: {type: new GraphQLNonNull(ChangeProfileInputType)},
+                            },
+                            resolve: (_, {id, dto}: { id: UUID; dto: { isMale: boolean } }) => {
+                                return prisma.profile.update({
+                                    where: {id},
+                                    data: dto,
+                                });
                             },
                         },
                     }),
